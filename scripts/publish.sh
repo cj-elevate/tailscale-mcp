@@ -70,10 +70,10 @@ bump_version() {
 
   if [ "$bump_type" == "custom" ]; then
     read -p "Enter the custom version number: " new_version
-    bun version "$new_version" --no-git-tag-version
+    npm version "$new_version" --no-git-tag-version
   else
-    # Use bun version to bump and capture the new version
-    new_version=$(bun version "$bump_type" --no-git-tag-version | sed 's/v//')
+    # Use npm version to bump and capture the new version
+    new_version=$(npm version "$bump_type" --no-git-tag-version | sed 's/v//')
   fi
 
   print_success "Version bumped to $new_version"
