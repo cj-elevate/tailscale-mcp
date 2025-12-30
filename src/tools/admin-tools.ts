@@ -33,9 +33,9 @@ const ExitNodeSchema = z.object({
     .describe("Device ID for exit node operations"),
   routes: z
     .array(z.string())
-    .min(1, "At least one route must be specified")
+    .optional()
     .describe(
-      'Routes to advertise (e.g., ["0.0.0.0/0", "::/0"] for full exit node)',
+      'Routes to advertise (required for "advertise" operation, e.g., ["0.0.0.0/0", "::/0"] for full exit node)',
     ),
 });
 
@@ -155,6 +155,9 @@ async function getTailnetInfo(
     }
 
     const info = result.data;
+    const isKeyExpiryDisabled = info?.keyExpiryDisabled ? "Yes" : "No"
+    const isDeviceApprovalRequired = info?.deviceApprovalRequired ? "Yes" : "No"
+
     const formattedInfo = `**Tailnet Information**
 
 **Basic Details:**
@@ -175,11 +178,11 @@ ${
   args.includeDetails
     ? `
 **Advanced Details:**
-  - Key expiry disabled: ${info?.keyExpiryDisabled ? "Yes" : "No"}
+  - Key expiry disabled: ${isKeyExpiryDisabled}
   - Machine authorization timeout: ${
     info?.machineAuthorizationTimeout || "Default"
   }
-  - Device approval required: ${info?.deviceApprovalRequired ? "Yes" : "No"}`
+  - Device approval required: ${isDeviceApprovalRequired}`
     : ""
 }`;
 
@@ -282,9 +285,14 @@ async function manageExitNodes(
       }
 
       case "advertise": {
-        if (!args.deviceId || !args.routes) {
+        if (!args.deviceId) {
           return returnToolError(
-            "Device ID and routes are required for advertise operation",
+            "Device ID is required for advertise operation",
+          );
+        }
+        if (!args.routes || args.routes.length === 0) {
+          return returnToolError(
+            "At least one route is required for advertise operation (e.g., ['0.0.0.0/0', '::/0'] for full exit node)",
           );
         }
 
