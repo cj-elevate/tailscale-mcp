@@ -2,7 +2,6 @@ import { logger } from "../logger.js";
 import type {
   CLIResponse,
   TailscaleAPIResponse,
-  TailscaleCLIStatus,
   TailscaleConfig,
   TailscaleDevice,
 } from "../types.js";
@@ -14,6 +13,10 @@ export type TransportMode = "stdio" | "http";
 export interface UnifiedClientConfig extends TailscaleConfig {
   transportMode: TransportMode;
   preferAPI?: boolean; // Default: false for stdio, true for http
+  /** Optional pre-created API instance to avoid duplicate instantiation */
+  api?: TailscaleAPI;
+  /** Optional pre-created CLI instance to avoid duplicate instantiation */
+  cli?: TailscaleCLI;
 }
 
 /**
@@ -32,9 +35,9 @@ export interface UnifiedResponse<T> {
  * based on transport mode, availability, and configuration preferences.
  */
 export class UnifiedTailscaleClient {
-  private api: TailscaleAPI;
-  private cli: TailscaleCLI;
-  private config: UnifiedClientConfig;
+  private readonly api: TailscaleAPI;
+  private readonly  cli: TailscaleCLI;
+  private readonly config: UnifiedClientConfig;
   private apiAvailable = false;
   private cliAvailable = false;
 
@@ -44,50 +47,73 @@ export class UnifiedTailscaleClient {
       ...config,
     };
 
-    this.api = new TailscaleAPI({
-      apiKey: config.apiKey,
-      tailnet: config.tailnet,
-    });
+    // Reuse provided instances or create new ones
+    this.api =
+      config.api ??
+      new TailscaleAPI({
+        apiKey: config.apiKey,
+        tailnet: config.tailnet,
+      });
 
-    this.cli = new TailscaleCLI(config.cliPath);
+    this.cli = config.cli ?? new TailscaleCLI(config.cliPath);
   }
 
   /**
-   * Initialize the client by checking availability of API and CLI
+   * Initialize the client by checking availability of API and CLI in parallel
    */
   async initialize(): Promise<void> {
     logger.debug("Initializing unified Tailscale client...");
 
-    // Check API availability
-    try {
-      const apiTest = await this.api.testConnection();
-      this.apiAvailable = apiTest.success;
-      if (this.apiAvailable) {
-        logger.debug("Tailscale API is available");
-      } else {
-        logger.debug("Tailscale API is not available:", apiTest.error);
-      }
-    } catch (error) {
-      logger.debug("Tailscale API test failed:", error);
-      this.apiAvailable = false;
-    }
+    // Check API and CLI availability in parallel for faster initialization
+    const [apiResult, cliResult] = await Promise.allSettled([
+      this.checkAPIAvailability(),
+      this.checkCLIAvailability(),
+    ]);
 
-    // Check CLI availability
-    try {
-      this.cliAvailable = await this.cli.isAvailable();
-      if (this.cliAvailable) {
-        logger.debug("Tailscale CLI is available");
-      } else {
-        logger.debug("Tailscale CLI is not available");
-      }
-    } catch (error) {
-      logger.debug("Tailscale CLI test failed:", error);
-      this.cliAvailable = false;
-    }
+    this.apiAvailable =
+      apiResult.status === "fulfilled" ? apiResult.value : false;
+    this.cliAvailable =
+      cliResult.status === "fulfilled" ? cliResult.value : false;
 
     logger.debug(
       `Client initialized - API: ${this.apiAvailable}, CLI: ${this.cliAvailable}, Mode: ${this.config.transportMode}, Prefer API: ${this.config.preferAPI}`,
     );
+  }
+
+  /**
+   * Check if the API is available
+   */
+  private async checkAPIAvailability(): Promise<boolean> {
+    try {
+      const apiTest = await this.api.testConnection();
+      if (apiTest.success) {
+        logger.debug("Tailscale API is available");
+        return true;
+      }
+      logger.debug("Tailscale API is not available:", apiTest.error);
+      return false;
+    } catch (error) {
+      logger.debug("Tailscale API test failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if the CLI is available
+   */
+  private async checkCLIAvailability(): Promise<boolean> {
+    try {
+      const isAvailable = await this.cli.isAvailable();
+      if (isAvailable) {
+        logger.debug("Tailscale CLI is available");
+        return true;
+      }
+      logger.debug("Tailscale CLI is not available");
+      return false;
+    } catch (error) {
+      logger.debug("Tailscale CLI test failed:", error);
+      return false;
+    }
   }
 
   /**
@@ -140,7 +166,7 @@ export class UnifiedTailscaleClient {
   /**
    * Get network status - available in both API and CLI
    */
-  async getStatus(): Promise<UnifiedResponse<TailscaleCLIStatus | unknown>> {
+  async getStatus(): Promise<UnifiedResponse<unknown>> {
     if (this.shouldUseAPI("getStatus")) {
       const response = await this.api.getTailnetInfo();
       return this.normalizeAPIResponse(response);

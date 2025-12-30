@@ -21,12 +21,14 @@ export class TailscaleMCPServer {
     const api = createTailscaleAPI();
     const cli = new TailscaleCLI();
 
-    // Create unified client based on transport mode
+    // Create unified client based on transport mode, reusing the API/CLI instances
     this.unifiedClient = new UnifiedTailscaleClient({
       transportMode: mode,
       apiKey: process.env.TAILSCALE_API_KEY,
       tailnet: process.env.TAILSCALE_TAILNET,
       preferAPI: mode === "http", // HTTP mode prefers API, stdio prefers CLI
+      api, // Reuse existing instance
+      cli, // Reuse existing instance
     });
 
     // Initialize the unified client
