@@ -25,7 +25,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const target of dangerousTargets) {
-        await expect(cli.ping(target)).rejects.toThrow(/Invalid character/);
+        expect(() => cli.ping(target)).toThrow(/Invalid character/);
       }
     });
 
@@ -38,13 +38,13 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const target of pathTraversalTargets) {
-        await expect(cli.ping(target)).rejects.toThrow(/Invalid/);
+        expect(() => cli.ping(target)).toThrow(/Invalid/);
       }
     });
 
     test("should reject overly long targets", async () => {
       const longTarget = "a".repeat(300);
-      await expect(cli.ping(longTarget)).rejects.toThrow(/too long/);
+      expect(() => cli.ping(longTarget)).toThrow(/too long/);
     });
 
     test("should accept valid targets", async () => {
@@ -69,16 +69,16 @@ describe("TailscaleCLI Security Tests (integration)", () => {
     });
 
     test("should validate ping count parameter", async () => {
-      await expect(cli.ping("valid-host", 0)).rejects.toThrow(
+      expect(() => cli.ping("valid-host", 0)).toThrow(
         /Count must be an integer between 1 and 100/,
       );
-      await expect(cli.ping("valid-host", 101)).rejects.toThrow(
+      expect(() => cli.ping("valid-host", 101)).toThrow(
         /Count must be an integer between 1 and 100/,
       );
-      await expect(cli.ping("valid-host", -1)).rejects.toThrow(
+      expect(() => cli.ping("valid-host", -1)).toThrow(
         /Count must be an integer between 1 and 100/,
       );
-      await expect(cli.ping("valid-host", 1.5)).rejects.toThrow(
+      expect(() => cli.ping("valid-host", 1.5)).toThrow(
         /Count must be an integer between 1 and 100/,
       );
     });
@@ -94,7 +94,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const hostname of dangerousHostnames) {
-        await expect(cli.up({ hostname })).rejects.toThrow(/Invalid character/);
+        expect(() => cli.up({ hostname })).toThrow(/Invalid character/);
       }
     });
 
@@ -106,9 +106,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const loginServer of dangerousServers) {
-        await expect(cli.up({ loginServer })).rejects.toThrow(
-          /Invalid character/,
-        );
+        expect(() => cli.up({ loginServer })).toThrow(/Invalid character/);
       }
     });
 
@@ -120,7 +118,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const authKey of dangerousKeys) {
-        await expect(cli.up({ authKey })).rejects.toThrow(/Invalid character/);
+        expect(() => cli.up({ authKey })).toThrow(/Invalid character/);
       }
     });
   });
@@ -135,9 +133,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const advertiseRoutes of ourValidationRoutes) {
-        await expect(cli.up({ advertiseRoutes })).rejects.toThrow(
-          /Invalid route format/,
-        );
+        expect(() => cli.up({ advertiseRoutes })).toThrow(/Invalid route format/);
       }
 
       // Routes that are caught by Tailscale CLI itself (which is also good security)
@@ -199,9 +195,7 @@ describe("TailscaleCLI Security Tests (integration)", () => {
       ];
 
       for (const nodeId of dangerousNodeIds) {
-        await expect(cli.setExitNode(nodeId)).rejects.toThrow(
-          /Invalid character/,
-        );
+        expect(() => cli.setExitNode(nodeId)).toThrow(/Invalid character/);
       }
     });
   });
