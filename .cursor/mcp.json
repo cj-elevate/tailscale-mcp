@@ -1,24 +1,11 @@
 {
   "mcpServers": {
-    "task-master-ai": {
-      "command": "npx",
-      "args": ["-y", "--package=task-master-ai", "task-master-ai"]
-    },
     "local-mcp-server": {
       "command": "bun",
       "args": [
         "run",
         "/Users/jacob/Projects/mcp_servers/tailscale-mcp/dist/index.js"
       ]
-    },
-    "shrimp-task-manager": {
-      "command": "npx",
-      "args": ["-y", "mcp-shrimp-task-manager"],
-      "env": {
-        "DATA_DIR": "/Users/jacob/Projects/mcp_servers/tailscale-mcp/data",
-        "TEMPLATES_USE": "en",
-        "ENABLE_GUI": "false"
-      }
     }
   }
 }
