@@ -2,6 +2,7 @@ import axios, {
   AxiosError,
   type AxiosInstance,
   type AxiosResponse,
+  type InternalAxiosRequestConfig,
 } from "axios";
 import { ZodError } from "zod";
 import { logger } from "../logger";
@@ -28,34 +29,76 @@ import {
   type Webhook,
   type WebhookList,
 } from "../types";
+import { TailscaleOAuthManager } from "./oauth";
+
+export type AuthMode = "api_key" | "oauth" | "none";
 
 export class TailscaleAPI {
   private readonly client: AxiosInstance;
   private readonly tailnet: string;
 
+  private readonly authMode: AuthMode;
+  private readonly oauthManager: TailscaleOAuthManager | null = null;
+
   constructor(config: TailscaleConfig = {}) {
     const apiKey = config.apiKey || process.env.TAILSCALE_API_KEY;
+    const oauthClientId =
+      config.oauthClientId || process.env.TAILSCALE_OAUTH_CLIENT_ID;
+    const oauthClientSecret =
+      config.oauthClientSecret || process.env.TAILSCALE_OAUTH_CLIENT_SECRET;
     const tailnet = config.tailnet || process.env.TAILSCALE_TAILNET || "-";
+    const baseUrl =
+      config.apiBaseUrl ||
+      process.env.TAILSCALE_API_BASE_URL ||
+      "https://api.tailscale.com";
 
-    if (!apiKey) {
+    // Determine auth mode
+    if (oauthClientId && oauthClientSecret) {
+      this.authMode = "oauth";
+      this.oauthManager = new TailscaleOAuthManager({
+        clientId: oauthClientId,
+        clientSecret: oauthClientSecret,
+        baseUrl,
+      });
+      logger.info(
+        "Using OAuth authentication for Tailscale API (scoped permissions)",
+      );
+    } else if (apiKey) {
+      this.authMode = "api_key";
+      logger.debug("Using API key authentication for Tailscale API");
+    } else {
+      this.authMode = "none";
       logger.warn(
-        "No Tailscale API key provided. API operations will fail until TAILSCALE_API_KEY is set.",
+        "No Tailscale credentials provided. API operations will fail. Set TAILSCALE_API_KEY or TAILSCALE_OAUTH_CLIENT_ID/SECRET.",
       );
     }
 
     this.tailnet = tailnet;
     this.client = axios.create({
       timeout: 30000,
-      baseURL: "https://api.tailscale.com/api/v2",
+      baseURL: `${baseUrl}/api/v2`,
       headers: {
-        Authorization: apiKey ? `Bearer ${apiKey}` : "",
+        // For API key auth, set static header; for OAuth, we'll set it dynamically
+        Authorization:
+          this.authMode === "api_key" && apiKey ? `Bearer ${apiKey}` : "",
         "Content-Type": "application/json",
       },
     });
 
-    // Add request/response interceptors for logging
+    // Add request interceptor for OAuth token injection and logging
     this.client.interceptors.request.use(
-      (config) => {
+      async (config: InternalAxiosRequestConfig) => {
+        // Inject OAuth token if using OAuth auth
+        if (this.authMode === "oauth" && this.oauthManager) {
+          try {
+            const token = await this.oauthManager.getAccessToken();
+            config.headers.Authorization = `Bearer ${token}`;
+          } catch (error) {
+            logger.error("Failed to get OAuth token for request:", error);
+            throw error;
+          }
+        }
+
         logger.debug(
           `API Request: ${config.method?.toUpperCase()} ${config.url}`,
         );
@@ -86,6 +129,13 @@ export class TailscaleAPI {
         return Promise.reject(error);
       },
     );
+  }
+
+  /**
+   * Get the current authentication mode
+   */
+  getAuthMode(): AuthMode {
+    return this.authMode;
   }
 
   /**

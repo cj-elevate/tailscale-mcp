@@ -578,9 +578,18 @@ export interface ToolResult {
 
 // Configuration types
 export interface TailscaleConfig {
+  /** API key for authentication (mutually exclusive with OAuth) */
   apiKey?: string;
+  /** Tailnet name or "-" for the default tailnet */
   tailnet?: string;
+  /** Path to the Tailscale CLI binary */
   cliPath?: string;
+  /** OAuth client ID (for OAuth authentication) */
+  oauthClientId?: string;
+  /** OAuth client secret (for OAuth authentication) */
+  oauthClientSecret?: string;
+  /** Base URL for Tailscale API (default: https://api.tailscale.com) */
+  apiBaseUrl?: string;
 }
 
 // Error types

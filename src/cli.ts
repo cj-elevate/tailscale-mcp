@@ -9,7 +9,7 @@ export interface CLIOptions {
 }
 
 export class TailscaleMCPCLI {
-  private options: CLIOptions;
+  private readonly options: CLIOptions;
   private server?: TailscaleMCPServer;
 
   constructor() {
@@ -74,12 +74,25 @@ Modes:
   http                HTTP server mode for testing and development with REST endpoints
 
 Environment Variables:
-  TAILSCALE_API_KEY   Your Tailscale API key (required for API operations)
-  TAILSCALE_TAILNET   Your Tailscale tailnet name (required for API operations)
-  LOG_LEVEL           Logging level: 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: 1)
-  MCP_SERVER_LOG_FILE Log file path with optional {timestamp} placeholder
-  NODE_ENV            Environment: development or production (affects security settings)
-  CORS_ORIGIN         Allowed CORS origin for HTTP mode (production only)
+  Authentication (choose one):
+    TAILSCALE_API_KEY           Your Tailscale API key (full permissions)
+    -- OR --
+    TAILSCALE_OAUTH_CLIENT_ID   OAuth client ID (for scoped permissions)
+    TAILSCALE_OAUTH_CLIENT_SECRET  OAuth client secret
+
+  Required:
+    TAILSCALE_TAILNET           Your Tailscale tailnet name
+
+  Optional:
+    TAILSCALE_API_BASE_URL      API base URL (default: https://api.tailscale.com)
+    LOG_LEVEL                   Logging level: 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: 1)
+    MCP_SERVER_LOG_FILE         Log file path with optional {timestamp} placeholder
+    NODE_ENV                    Environment: development or production
+    CORS_ORIGIN                 Allowed CORS origin for HTTP mode (production only)
+
+OAuth vs API Key:
+  OAuth clients allow scoped permissions (e.g., read-only device access).
+  Create OAuth clients at: https://login.tailscale.com/admin/settings/oauth
     `);
   }
 

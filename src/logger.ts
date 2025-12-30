@@ -37,7 +37,7 @@ class Logger {
 
       // If the log path contains {timestamp}, replace it with the timestamp
       if (logPath.includes("{timestamp}")) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const timestamp = new Date().toISOString().replaceAll(/[:.]/g, "-");
         logPath = logPath.replace("{timestamp}", timestamp);
       }
 

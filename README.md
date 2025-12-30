@@ -136,15 +136,82 @@ Add to your Claude Desktop configuration (`~/.claude/claude_desktop_config.json`
 
 ### Environment Variables
 
+#### Authentication (choose one method)
+
+| Variable                        | Description                   | Required |
+| ------------------------------- | ----------------------------- | -------- |
+| `TAILSCALE_API_KEY`             | Tailscale API key             | Option 1 |
+| `TAILSCALE_OAUTH_CLIENT_ID`     | OAuth client ID               | Option 2 |
+| `TAILSCALE_OAUTH_CLIENT_SECRET` | OAuth client secret           | Option 2 |
+
+#### General Configuration
+
 | Variable                 | Description            | Required | Default                     |
 | ------------------------ | ---------------------- | -------- | --------------------------- |
-| `TAILSCALE_API_KEY`      | Tailscale API key      | Yes\*    | -                           |
 | `TAILSCALE_TAILNET`      | Tailscale tailnet name | Yes\*    | -                           |
 | `TAILSCALE_API_BASE_URL` | API base URL           | No       | `https://api.tailscale.com` |
 | `LOG_LEVEL`              | Logging level (0-3)    | No       | `1` (INFO)                  |
 | `MCP_SERVER_LOG_FILE`    | Server log file path   | No       | -                           |
 
 \*Required for API-based operations. CLI operations work without API credentials.
+
+### OAuth vs API Key Authentication
+
+**API Key** (`TAILSCALE_API_KEY`):
+
+- Full permissions matching the user who created the key
+- Expires in 1-90 days
+- Tied to a specific user account
+
+**OAuth Client** (`TAILSCALE_OAUTH_CLIENT_ID` + `TAILSCALE_OAUTH_CLIENT_SECRET`):
+
+- Scoped permissions (e.g., read-only device access)
+- Does not expire (but can be revoked)
+- Not tied to any user account
+- Recommended for automation and least-privilege access
+
+#### Creating an OAuth Client
+
+1. Go to [Tailscale OAuth Settings](https://login.tailscale.com/admin/settings/oauth)
+2. Click "Generate OAuth client"
+3. Select the required scopes (e.g., `devices:read` for read-only device access)
+4. Copy the client ID and secret
+
+#### OAuth Configuration Example
+
+```json
+{
+  "mcpServers": {
+    "tailscale": {
+      "command": "npx",
+      "args": [
+        "--package=@hexsleeves/tailscale-mcp-server",
+        "tailscale-mcp-server"
+      ],
+      "env": {
+        "TAILSCALE_OAUTH_CLIENT_ID": "your-oauth-client-id",
+        "TAILSCALE_OAUTH_CLIENT_SECRET": "your-oauth-client-secret",
+        "TAILSCALE_TAILNET": "your-tailnet-name"
+      }
+    }
+  }
+}
+```
+
+#### Available OAuth Scopes
+
+| Scope              | Description                          |
+| ------------------ | ------------------------------------ |
+| `all:read`         | Read-only access to all resources    |
+| `devices:read`     | Read device information              |
+| `devices:core`     | Full device management               |
+| `dns:read`         | Read DNS settings                    |
+| `dns:write`        | Modify DNS settings                  |
+| `acl:read`         | Read ACL configuration               |
+| `acl:write`        | Modify ACL configuration             |
+| `auth_keys`        | Manage authentication keys           |
+
+See [Tailscale OAuth Scopes](https://tailscale.com/kb/1215/oauth-clients#scopes) for a complete list.
 
 ## Available Tools
 
