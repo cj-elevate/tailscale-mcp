@@ -16,7 +16,7 @@ interface LogEntry {
 class Logger {
   private level: LogLevel;
   private logFilePath: string | null = null;
-  private writeQueue: LogEntry[] = [];
+  private readonly writeQueue: LogEntry[] = [];
   private isProcessingQueue = false;
   private readonly maxBatchSize = 50; // Process up to 50 entries at once
   private readonly flushTimeout = 100; // Flush every 100ms if queue has items
@@ -101,12 +101,10 @@ class Logger {
     }
 
     // Otherwise, schedule processing with a timeout
-    if (!this.flushTimer) {
-      this.flushTimer = setTimeout(() => {
-        this.flushTimer = null;
-        this.processWriteQueue();
-      }, this.flushTimeout);
-    }
+    this.flushTimer ??= setTimeout(() => {
+      this.flushTimer = null;
+      this.processWriteQueue();
+    }, this.flushTimeout);
   }
 
   private async processWriteQueue(): Promise<void> {

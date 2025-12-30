@@ -20,7 +20,7 @@ export const cidrPattern =
   /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$|^([0-9a-fA-F:]+)\/\d{1,3}$/;
 
 export class TailscaleCLI {
-  private cliPath: string;
+  private readonly cliPath: string;
 
   constructor(cliPath = "tailscale") {
     this.cliPath = cliPath;
@@ -80,7 +80,7 @@ export class TailscaleCLI {
 
   private validateStringInput(input: string, fieldName: string): void {
     if (typeof input !== "string") {
-      throw new Error(`${fieldName} must be a string`);
+      throw new TypeError(`${fieldName} must be a string`);
     }
 
     // Check for dangerous characters
@@ -112,12 +112,12 @@ export class TailscaleCLI {
 
   private validateRoutes(routes: string[]): void {
     if (!Array.isArray(routes)) {
-      throw new Error("Routes must be an array");
+      throw new TypeError("Routes must be an array");
     }
 
     for (const route of routes) {
       if (typeof route !== "string") {
-        throw new Error("Each route must be a string");
+        throw new TypeError("Each route must be a string");
       }
 
       // Basic CIDR validation
@@ -140,7 +140,7 @@ export class TailscaleCLI {
       // Validate all arguments
       for (const arg of args) {
         if (typeof arg !== "string") {
-          throw new Error("All command arguments must be strings");
+          throw new TypeError("All command arguments must be strings");
         }
 
         // Basic validation for each argument

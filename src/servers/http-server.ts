@@ -24,8 +24,8 @@ interface SessionInfo {
 }
 
 export class HttpMCPServer {
-  private server: Server;
-  private toolRegistry: ToolRegistry;
+  private readonly server: Server;
+  private readonly toolRegistry: ToolRegistry;
   private httpServer?: http.Server;
   private sessions: { [sessionId: string]: SessionInfo } = {};
   private cleanupInterval?: NodeJS.Timeout;
@@ -357,16 +357,6 @@ export class HttpMCPServer {
       logger.debug(`Tools list: http://localhost:${port}/tools`);
       logger.debug(`MCP endpoint: http://localhost:${port}/mcp`);
     });
-
-    // Handle process termination gracefully
-    const cleanup = async () => {
-      logger.debug("HTTP MCP Server shutting down...");
-      await this.stop();
-      process.exit(0);
-    };
-
-    process.on("SIGINT", cleanup);
-    process.on("SIGTERM", cleanup);
 
     logger.debug(
       "HTTP MCP Server started successfully and listening for MCP messages",

@@ -29,8 +29,8 @@ export interface ToolModule {
 
 // Tool registry
 export class ToolRegistry {
-  private tools = new Map<string, ToolDefinition>();
-  private context: ToolContext;
+  private readonly tools = new Map<string, ToolDefinition>();
+  private readonly context: ToolContext;
 
   constructor(context: ToolContext) {
     this.context = context;
@@ -147,7 +147,7 @@ function zodToJsonSchema(schema: z.ZodSchema): MCPJsonSchema {
     const jsonSchema = z.toJSONSchema(schema);
 
     // Extract properties and required from the generated schema, but ensure type is "object"
-    const { type: _unusedType, ...otherProps } = jsonSchema;
+    const { type: _unusedType, $schema: _unusedSchema, ...otherProps } = jsonSchema;
 
     const mcpSchema: MCPJsonSchema = {
       type: "object",

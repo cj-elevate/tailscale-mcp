@@ -30,8 +30,8 @@ import {
 } from "../types";
 
 export class TailscaleAPI {
-  private client: AxiosInstance;
-  private tailnet: string;
+  private readonly client: AxiosInstance;
+  private readonly tailnet: string;
 
   constructor(config: TailscaleConfig = {}) {
     const apiKey = config.apiKey || process.env.TAILSCALE_API_KEY;
@@ -119,17 +119,20 @@ export class TailscaleAPI {
         statusCode: status,
       };
     }
+
     if (error instanceof Error) {
-      // Network error
+      // Network or other Error instance
       return {
         success: false,
-        error: "Network error: Unable to connect to Tailscale API",
+        error: error.message || "Network error: Unable to connect to Tailscale API",
         statusCode: 0,
       };
     }
+
+    // Unknown error type
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: String(error) || "Unknown error occurred",
       statusCode: 0,
     };
   }
@@ -329,19 +332,15 @@ export class TailscaleAPI {
   async getVersion(): Promise<
     TailscaleAPIResponse<{ version: string; apiVersion: string }>
   > {
-    try {
-      // Since there's no direct version endpoint, we'll return static API version info
-      return {
-        success: true,
-        data: {
-          version: "API v2",
-          apiVersion: "2.0",
-        },
-        statusCode: 200,
-      };
-    } catch (error) {
-      return this.handleError(error);
-    }
+    // Since there's no direct version endpoint, we'll return static API version info
+    return {
+      success: true,
+      data: {
+        version: "API v2",
+        apiVersion: "2.0",
+      },
+      statusCode: 200,
+    };
   }
 
   /**
@@ -576,12 +575,7 @@ export class TailscaleAPI {
    * Get detailed tailnet information
    */
   async getDetailedTailnetInfo(): Promise<TailscaleAPIResponse<TailnetInfo>> {
-    try {
-      const response = await this.client.get(`/tailnet/${this.tailnet}`);
-      return this.handleResponse(response);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.getTailnetInfo();
   }
 
   /**
@@ -626,14 +620,7 @@ export class TailscaleAPI {
     deviceId: string,
     routes: string[],
   ): Promise<TailscaleAPIResponse<void>> {
-    try {
-      const response = await this.client.post(`/device/${deviceId}/routes`, {
-        routes: routes,
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.enableDeviceRoutes(deviceId, routes);
   }
 
   /**

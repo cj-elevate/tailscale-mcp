@@ -10,8 +10,8 @@ import type { ToolRegistry } from "../tools/index.js";
 const KEEP_ALIVE_INTERVAL = 30_000;
 
 export class StdioMCPServer {
-  private server: Server;
-  private toolRegistry: ToolRegistry;
+  private readonly server: Server;
+  private readonly toolRegistry: ToolRegistry;
   private keepAliveInterval?: NodeJS.Timeout;
   private transport?: StdioServerTransport;
 
@@ -67,15 +67,6 @@ export class StdioMCPServer {
       KEEP_ALIVE_INTERVAL,
     ).unref(); // allow Node to exit naturally
 
-    // Handle process termination gracefully
-    const cleanup = async () => {
-      logger.debug("Stdio MCP Server shutting down...");
-      await this.stop();
-      process.exit(0);
-    };
-
-    process.on("SIGINT", cleanup);
-    process.on("SIGTERM", cleanup);
 
     logger.debug(
       "Stdio MCP Server started successfully and listening for MCP messages",
