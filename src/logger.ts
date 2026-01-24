@@ -243,7 +243,7 @@ class Logger {
 // Export singleton instance
 export const logger = new Logger(
   process.env.LOG_LEVEL
-    ? Number.parseInt(process.env.LOG_LEVEL)
+    ? Number.parseInt(process.env.LOG_LEVEL, 10)
     : LogLevel.INFO,
 );
 

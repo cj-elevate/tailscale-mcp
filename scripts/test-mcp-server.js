@@ -405,7 +405,7 @@ class TailscaleMCPTester {
     }
 
     const countStr = (await this.prompt("Number of pings [4]: ")) || "4";
-    const count = Number.parseInt(countStr) || 4;
+    const count = Number.parseInt(countStr, 10) || 4;
 
     const result = await this.callTool("ping_peer", {
       target: target.trim(),

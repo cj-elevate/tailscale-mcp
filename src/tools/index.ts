@@ -78,7 +78,7 @@ export class ToolRegistry {
   private register(tool: ToolDefinition): void {
     if (this.tools.has(tool.name)) {
       logger.warn(
-        `Duplicate tool name detected: "${tool.name}" – overriding previous definition`
+        `Duplicate tool name detected: "${tool.name}" – overriding previous definition`,
       );
     }
     this.tools.set(tool.name, tool);
@@ -94,7 +94,7 @@ export class ToolRegistry {
 
   async callTool(
     name: string,
-    args?: Record<string, unknown>
+    args?: Record<string, unknown>,
   ): Promise<CallToolResult> {
     const tool = this.tools.get(name);
     if (!tool) {

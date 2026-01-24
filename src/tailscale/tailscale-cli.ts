@@ -1,17 +1,17 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import {
-  getErrorMessage,
-  validateRoutes,
-  validateStringInput,
-  validateTarget,
-} from "../utils.js";
 import { logger } from "../logger.js";
 import {
   type CLIResponse,
   type TailscaleCLIStatus,
   TailscaleCLIStatusSchema,
 } from "../types.js";
+import {
+  getErrorMessage,
+  validateRoutes,
+  validateStringInput,
+  validateTarget,
+} from "../utils.js";
 
 const execFileAsync = promisify(execFile);
 

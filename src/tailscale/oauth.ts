@@ -50,7 +50,10 @@ export class TailscaleOAuthManager {
    */
   async getAccessToken(): Promise<string> {
     if (this.isTokenValid()) {
-      return this.accessToken!;
+      if (!this.accessToken) {
+        throw new Error("Access token is null");
+      }
+      return this.accessToken;
     }
 
     return this.refreshToken();
